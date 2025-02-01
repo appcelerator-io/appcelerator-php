@@ -6,6 +6,8 @@ namespace AppCelerator\Utils;
 use AppCelerator\Exceptions\AppCeleratorHttpException;
 use Exception;
 
+use function AppCelerator\is_json;
+
 /**
  * Curl
  */
@@ -17,7 +19,7 @@ abstract class Curl
     /**
      * call
      */
-    function call(string $method, string $url, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false)
+    function call(string $method, string $url, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false) : Response
     {
         $method = strtoupper($method);
 
