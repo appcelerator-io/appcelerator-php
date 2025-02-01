@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace AppCelerator\Utils;
 
+use AppCelerator\Exceptions\AppCeleratorHttpException;
 use Exception;
 
 /**
@@ -116,7 +117,11 @@ abstract class Curl
             // Get result
             $response = is_json($result) ? new Response($result, $statusCode) : $result;
 
-            // Add errorUrl
+            // Not a response
+            if($response instanceof Response === false)
+                throw new AppCeleratorHttpException($response);
+
+            // Add information
             $response->setMethod($method);
             $response->setUrl($url);
 

@@ -11,21 +11,27 @@ use Exception;
  */
 class AppCeleratorHttpException extends Exception
 {
-    public function __construct(private Response $response)
+    public function __construct(private string|Response $response)
     {
-        $content = $response->getParameters();
-        $status = $response->getStatusCode();
+        $message = $response;
+        $status = 500;
 
-        $message = "$status";
-        
-        if(array_key_exists("error", $content))
-            $message .= " - " . $content["error"];
-
-        if(array_key_exists("errorDescription", $content))
-            $message .= " - " . $content["errorDescription"];
-
-        if($response->hasUrl())
-            $message .= " - (url: " . $response->getUrl() . ")";
+        if($response instanceof Response)
+        {
+            $content = $response->getParameters();
+            $status = $response->getStatusCode();
+    
+            $message = "$status";
+            
+            if(array_key_exists("error", $content))
+                $message .= " - " . $content["error"];
+    
+            if(array_key_exists("errorDescription", $content))
+                $message .= " - " . $content["errorDescription"];
+    
+            if($response->hasUrl())
+                $message .= " - (url: " . $response->getUrl() . ")";
+        }
 
         parent::__construct($message, $status);
     }
