@@ -6,8 +6,6 @@ namespace AppCelerator;
 use AppCelerator\Exceptions\AppCeleratorException;
 use AppCelerator\Factories\ServiceFactory;
 
-include_once "Autoloader.php";
-
 /**
  * Client
  * 

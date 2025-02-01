@@ -13,10 +13,15 @@ function is_json($input) : bool
 
 function format_uri(...$args) : string
 {
+    $length = count($args);
+
     foreach($args as $i => &$v)
     {
         $v = str_starts_with($v, "/") ? substr($v, 1) : $v;
-        $v = str_ends_with($v, "/") ? substr($v, 0, strlen($v) - 1) : $v;
+
+        if($i !== $length - 1)
+            $v = str_ends_with($v, "/") ? substr($v, 0, strlen($v) - 1) : $v;
     }
+
     return implode("/", $args);
 }

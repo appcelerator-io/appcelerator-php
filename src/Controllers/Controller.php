@@ -11,14 +11,30 @@ use AppCelerator\Utils\Response;
 
 use function AppCelerator\format_uri;
 
+include_once __DIR__ . "../../Library.php";
+
 /**
  * Controller
  */
 class Controller extends Curl implements ControllerInterface
 {
+    private null|Response $response;
+
     public function __construct(private ServiceInterface $service, public string $basePath = "")
     {
         parent::__construct($service->getClient()->getKey());
+
+        $this->response = null;
+    }
+
+    public function getService()
+    {
+        return $this->service;
+    }
+
+    public function getResponse()
+    {
+        return $this->response;
     }
 
     private function getEndpointUrl(string $path)
@@ -26,13 +42,13 @@ class Controller extends Curl implements ControllerInterface
         return format_uri($this->service->getServiceUrl(), $this->basePath, $path);
     }
 
-    public function curl(string $method, string $path, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false) : Response
+    public function curl(string $method, string $path, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false) : array
     {
-        $response = self::call($method, $this->getEndpointUrl($path), $data, $headers, $verbose, $debug);
+        $this->response = self::call($method, $this->getEndpointUrl($path), $data, $headers, $verbose, $debug);
 
-        $this->handleResponseErrors($response);
+        $this->handleResponseErrors($this->response);
 
-        return $response->getParameters();
+        return $this->response->getParameters();
     }
 
     public function handleResponseErrors(Response $response)

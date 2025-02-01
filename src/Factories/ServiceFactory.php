@@ -23,7 +23,7 @@ class ServiceFactory
     {
         $serviceName = $name . "service";
 
-        $path = dirname(__FILE__) . "/services/$serviceName.php";
+        $path = dirname(__FILE__) . "/../services/$serviceName.php";
 
         if(is_file($path))
             include_once $path;

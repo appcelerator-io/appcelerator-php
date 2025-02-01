@@ -22,7 +22,7 @@ class CRUDController extends Controller
      */
     public function get($id, array $params = [], array $options = [])
     {
-        return self::curl("GET", "$id/", $params, @$options["headers"] ?? []);
+        return self::curl("GET", "$id/", $params, @$options["headers"] ?? [])["data"];
     }
 
     /**
@@ -31,7 +31,7 @@ class CRUDController extends Controller
      */
     public function list(array $params = [], array $options = [])
     {
-        return self::curl("GET", "", $params, @$options["headers"] ?? []);
+        return self::curl("GET", "", $params, @$options["headers"] ?? [])["data"];
     }
 
     /**
@@ -50,11 +50,7 @@ class CRUDController extends Controller
      */
     public function update($id, array $params, array $options = [])
     {
-        $response = self::curl("PUT", "$id/", $params, @$options["headers"] ?? []);
-
-        $this->handleResponseErrors($response);
-
-        return $response->getParameters();
+        return self::curl("PUT", "$id/", $params, @$options["headers"] ?? []);
     }
 
     /**
@@ -64,10 +60,6 @@ class CRUDController extends Controller
      */
     public function delete($id, array $params = [], array $options = [])
     {
-        $response = self::curl("DELETE", "$id/", $params, @$options["headers"] ?? []);
-
-        $this->handleResponseErrors($response);
-
-        return $response->getParameters();
+        return self::curl("DELETE", "$id/", $params, @$options["headers"] ?? []);
     }
 }
