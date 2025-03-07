@@ -11,8 +11,12 @@ use Exception;
  */
 class AppCeleratorHttpException extends Exception
 {
+    public static $showUrl = false;
+
     public function __construct(private string|Response $response)
     {
+        $this->response = $response;
+
         $message = $response;
         $status = 500;
 
@@ -29,7 +33,7 @@ class AppCeleratorHttpException extends Exception
             if(array_key_exists("errorDescription", $content))
                 $message .= " - " . $content["errorDescription"];
     
-            if($response->hasUrl())
+            if(self::$showUrl && $response->hasUrl())
                 $message .= " - (url: " . $response->getUrl() . ")";
         }
 

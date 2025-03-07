@@ -10,6 +10,7 @@ use AppCelerator\Factories\ServiceFactory;
  * Client
  * 
  * @property \AppCelerator\Services\OAuth2Service $oauth2
+ * @property \AppCelerator\Services\CountriesService $countries
  */
 class Client extends ServiceFactory
 {

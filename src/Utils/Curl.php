@@ -6,8 +6,6 @@ namespace AppCelerator\Utils;
 use AppCelerator\Exceptions\AppCeleratorHttpException;
 use Exception;
 
-use function AppCelerator\is_json;
-
 /**
  * Curl
  */
@@ -19,7 +17,7 @@ abstract class Curl
     /**
      * call
      */
-    function call(string $method, string $url, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false) : Response
+    function call(string $method, string $url, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false)
     {
         $method = strtoupper($method);
 
@@ -113,19 +111,20 @@ abstract class Curl
         else
         {
             $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            $method = curl_getinfo($curl, CURLINFO_EFFECTIVE_METHOD);
-            $url = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
 
             // Get result
-            $response = is_json($result) ? new Response($result, $statusCode) : $result;
+            $response = is_string($result) && is_json($result) ? new Response($result, $statusCode) : $result;
 
             // Not a response
             if($response instanceof Response === false)
                 throw new AppCeleratorHttpException($response);
 
             // Add information
-            $response->setMethod($method);
-            $response->setUrl($url);
+            if(defined('CURLINFO_EFFECTIVE_METHOD'))
+                $response->setMethod(curl_getinfo($curl, CURLINFO_EFFECTIVE_METHOD));
+
+            if(defined('CURLINFO_EFFECTIVE_URL'))
+                $response->setUrl($url);
 
             // Return response
             return $response;

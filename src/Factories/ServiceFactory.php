@@ -29,7 +29,7 @@ class ServiceFactory
             include_once $path;
 
         $results = array_values(preg_grep("/$serviceName\.php$/i", scandir(dirname($path))));
-        
+
         if(count($results) == 0)
             throw new AppCeleratorException("Service '$name' could not be found");
 
