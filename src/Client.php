@@ -31,7 +31,7 @@ class Client extends ServiceFactory
     {
         foreach($serviceUrls as $serviceName => $url)
         {
-            if(!is_string($url) || !str_starts_with($url, "http"))
+            if(!is_string($url))
                 throw new AppCeleratorException("Invalid service url using" . (is_string($url) ? " $url" : " type " . gettype($url)));
             else
                 $this->serviceUrls[strtolower($serviceName)] = strtolower($url);
