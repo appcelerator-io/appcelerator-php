@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace AppCelerator\Controllers\OAuth2;
+namespace AppCelerator\Controllers\Oauth2;
 
 use AppCelerator\Controllers\CRUDController;
 use AppCelerator\Interfaces\ServiceInterface;

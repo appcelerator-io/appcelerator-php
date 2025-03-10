@@ -12,12 +12,11 @@ use AppCelerator\Interfaces\ServiceInterface;
  */
 class Service implements ServiceInterface
 {
-    private string $name;
     private array $controllers;
 
-    public function __construct(private Client $client, string $name)
+    public function __construct(private Client $client, private string $name)
     {
-        $this->name = ucfirst(strtolower($name));
+        $this->name = $name;
         $this->controllers = [];
     }
 
@@ -44,9 +43,9 @@ class Service implements ServiceInterface
 
         if(!is_file($filePath))
             throw new AppCeleratorException("Path '$filePath' could not be found");
-
+            
         include_once $filePath;
-
+        
         if(!is_dir(dirname($filePath)))
             throw new AppCeleratorException("Directory '".dirname($filePath)."' could not be found");
         
@@ -64,7 +63,7 @@ class Service implements ServiceInterface
 
     public function __get($name)
     {
-        $name = ucfirst(strtolower($name)); // Lower to make sure 'lower', then make first char uppercase
+        $name = ucfirst($name);
 
         if(!array_key_exists($name, $this->controllers))
             $this->initController($name);

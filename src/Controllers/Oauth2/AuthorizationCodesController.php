@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace AppCelerator\Controllers\OAuth2;
+namespace AppCelerator\Controllers\Oauth2;
 
 use AppCelerator\Controllers\Controller;
 use AppCelerator\Interfaces\ServiceInterface;
 
 /**
- * AuthorizationCodeController
+ * AuthorizationCodesController
  */
-class AuthorizationCodeController extends Controller
+class AuthorizationCodesController extends Controller
 {
     public function __construct(private ServiceInterface $service)
     {
