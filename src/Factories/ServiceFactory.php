@@ -21,14 +21,19 @@ class ServiceFactory
 
     private function initService(string $name)
     {
-        $serviceName = $name . "service";
+        $serviceName = $name . "Service";
 
-        $path = dirname(__FILE__) . "/../services/$serviceName.php";
+        $filePath = dirname(__FILE__) . "/../Services/$serviceName.php";
 
-        if(is_file($path))
-            include_once $path;
+        if(!is_file($filePath))
+            throw new AppCeleratorException("Path '$filePath' could not be found");
 
-        $results = array_values(preg_grep("/$serviceName\.php$/i", scandir(dirname($path))));
+        include_once $filePath;
+
+        if(!is_dir(dirname($filePath)))
+            throw new AppCeleratorException("Directory '".dirname($filePath)."' could not be found");
+
+        $results = array_values(preg_grep("/$serviceName\.php$/i", scandir(dirname($filePath))));
 
         if(count($results) == 0)
             throw new AppCeleratorException("Service '$name' could not be found");
@@ -42,7 +47,7 @@ class ServiceFactory
 
     public function __get($name)
     {
-        $name = strtolower($name);
+        $name = ucfirst(strtolower($name));
 
         if(!array_key_exists($name, $this->services))
             $this->initService($name);

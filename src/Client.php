@@ -9,7 +9,7 @@ use AppCelerator\Factories\ServiceFactory;
 /**
  * Client
  * 
- * @property \AppCelerator\Services\OAuth2Service $oauth2
+ * @property \AppCelerator\Services\Oauth2Service $oauth2
  * @property \AppCelerator\Services\CountriesService $countries
  */
 class Client extends ServiceFactory
@@ -19,6 +19,7 @@ class Client extends ServiceFactory
     public function __construct(private string $key, array $serviceUrls = [])
     {
         parent::__construct($this);
+
         $this->initServiceUrls($serviceUrls);
     }
 
@@ -34,12 +35,14 @@ class Client extends ServiceFactory
             if(!is_string($url))
                 throw new AppCeleratorException("Invalid service url using" . (is_string($url) ? " $url" : " type " . gettype($url)));
             else
-                $this->serviceUrls[strtolower($serviceName)] = strtolower($url);
+                $this->serviceUrls[ucfirst(strtolower($serviceName))] = strtolower($url);
         }
     }
     
     public function getServiceUrl(string $name)
     {
+        $name = ucfirst(strtolower($name));
+
         if(!array_key_exists($name, $this->serviceUrls))
             throw new AppCeleratorException("Service url not found for service '$name', please initialize the url first");
 
