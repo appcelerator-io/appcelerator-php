@@ -112,6 +112,9 @@ abstract class Curl
         {
             $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
+            // Result empty, set to empty array instead of leaving string empty
+            $result = is_string($result) && strlen($result) == 0 ? [] : $result;
+
             // Get result
             $response = is_string($result) && is_json($result) ? new Response($result, $statusCode) : $result;
 

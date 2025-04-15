@@ -11,6 +11,7 @@ use AppCelerator\Factories\ServiceFactory;
  * 
  * @property \AppCelerator\Services\Oauth2Service $oauth2
  * @property \AppCelerator\Services\CountriesService $countries
+ * @property \AppCelerator\Services\FilesService $files
  */
 class Client extends ServiceFactory
 {

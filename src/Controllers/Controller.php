@@ -10,6 +10,9 @@ use AppCelerator\Utils\Curl;
 use AppCelerator\Utils\Response;
 
 use function AppCelerator\format_uri;
+use function AppCelerator\str_end_with;
+use function AppCelerator\str_not_end_with;
+use function AppCelerator\str_start_with;
 
 include_once __DIR__ . "../../Library.php";
 
@@ -39,7 +42,19 @@ class Controller extends Curl implements ControllerInterface
 
     private function getEndpointUrl(string $path)
     {
-        return format_uri($this->service->getServiceUrl(), $this->basePath, $path);
+        $url = [];
+        $url[] = str_not_end_with($this->service->getServiceUrl(), "/");
+        $url[] = $basePath = str_start_with($this->basePath, "/");
+
+        if(strlen($path) > 0)
+        {
+            if(!str_ends_with($basePath, "/"))
+                $path = str_start_with($path, "/");
+        }
+
+        $url[] = $path;
+
+        return implode($url);
     }
 
     public function curl(string $method, string $path, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false) : array

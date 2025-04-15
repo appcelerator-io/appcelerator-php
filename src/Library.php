@@ -11,17 +11,42 @@ function is_json($input) : bool
     return (json_last_error() == JSON_ERROR_NONE);
 }
 
-function format_uri(...$args) : string
+function str_start_with(string $haystack, string $needle)
 {
-    $length = count($args);
+    if(strlen($haystack) == 0)
+        return $haystack;
 
-    foreach($args as $i => &$v)
-    {
-        $v = str_starts_with($v, "/") ? substr($v, 1) : $v;
+    if($haystack[0] == $needle)
+        return $haystack;
 
-        if($i !== $length - 1)
-            $v = str_ends_with($v, "/") ? substr($v, 0, strlen($v) - 1) : $v;
-    }
+    return "$needle$haystack";
+}
 
-    return implode("/", $args);
+function str_not_start_with(string $haystack, string $needle)
+{
+    if(strlen($haystack) > 0)
+        if($haystack[0] == $needle)
+            return substr($haystack, strlen($needle));
+
+    return "$haystack";
+}
+
+function str_end_with(string $haystack, string $needle)
+{
+    if(strlen($haystack) == 0)
+        return $haystack;
+
+    if($haystack[strlen($haystack) - 1] == $needle)
+        return $haystack;
+
+    return "$haystack$needle";
+}
+
+function str_not_end_with(string $haystack, string $needle)
+{
+    if(strlen($haystack) > 0)
+        if($haystack[($len = strlen($haystack)) - 1] == $needle)
+            return substr($haystack, 0, $len - 1);
+
+    return "$haystack";
 }
