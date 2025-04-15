@@ -52,7 +52,7 @@ class FilesController extends Controller
      */
     public function delete($id, array $params = [], array $options = [])
     {
-        return self::curl("DELETE", "file/$id/", $params, @$options["headers"] ?? [])["data"];
+        return self::curl("DELETE", "file/$id/", $params, @$options["headers"] ?? []);
     }
 
     /**
@@ -63,7 +63,7 @@ class FilesController extends Controller
      */
     public function convert($id, string $formats, array $params = [], array $options = [])
     {
-        return self::curl("POST", "file/$id/resize", array_merge(["formats" => $formats], $params), @$options["headers"] ?? [])["data"];
+        return self::curl("POST", "file/$id/resize", array_merge(["formats" => $formats], $params), @$options["headers"] ?? []);
     }
 
     /**
