@@ -17,9 +17,9 @@ class Client extends ServiceFactory
 {
     private array $serviceUrls;
 
-    public function __construct(private string $key, array $serviceUrls = [])
+    public function __construct(private string $key, array $serviceUrls = [], private array $opts = [])
     {
-        parent::__construct($this);
+        parent::__construct($this, $opts);
 
         $this->initServiceUrls($serviceUrls);
     }

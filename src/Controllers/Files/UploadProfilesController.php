@@ -11,9 +11,9 @@ use AppCelerator\Interfaces\ServiceInterface;
  */
 class UploadProfilesController extends CRUDController
 {
-    public function __construct(private ServiceInterface $service)
+    public function __construct(private ServiceInterface $service, array $opts = [])
     {
-        parent::__construct($service, "upload-profile/");
+        parent::__construct($service, "upload-profile/", $opts);
     }
 
     /**

@@ -11,9 +11,9 @@ use AppCelerator\Interfaces\ServiceInterface;
  */
 class AuthorizationCodesController extends Controller
 {
-    public function __construct(private ServiceInterface $service)
+    public function __construct(private ServiceInterface $service, array $opts = [])
     {
-        parent::__construct($service, "authorization-code/");   
+        parent::__construct($service, "authorization-code/", $opts);   
     }
 
     /**

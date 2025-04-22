@@ -14,7 +14,7 @@ class Service implements ServiceInterface
 {
     private array $controllers;
 
-    public function __construct(private Client $client, private string $name)
+    public function __construct(private Client $client, private string $name, private array $opts = [])
     {
         $this->name = $name;
         $this->controllers = [];
@@ -68,6 +68,6 @@ class Service implements ServiceInterface
         if(!array_key_exists($name, $this->controllers))
             $this->initController($name);
 
-        return new $this->controllers[$name]($this);
+        return new $this->controllers[$name]($this, $this->opts);
     }
 }

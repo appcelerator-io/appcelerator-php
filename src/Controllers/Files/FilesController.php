@@ -11,9 +11,9 @@ use AppCelerator\Interfaces\ServiceInterface;
  */
 class FilesController extends Controller
 {
-    public function __construct(private ServiceInterface $service)
+    public function __construct(private ServiceInterface $service, array $opts = [])
     {
-        parent::__construct($service, "");
+        parent::__construct($service, "", $opts);
     }
 
     /**
@@ -40,9 +40,9 @@ class FilesController extends Controller
      * @param string $code Authorization code
      * @param array $options
      */
-    public function uploadFile($storageId, $key, array $params = [], array $options = [])
+    public function uploadFile($storageId, $key, $mimeType, array $params = [], array $options = [])
     {
-        return self::curl("POST", "storage/$storageId/file/upload", array_merge(["key" => $key, "mimeType" => @$options["mimeType"], "uploadProfileId" => @$options["uploadProfileId"]], $params), @$options["headers"] ?? []);
+        return self::curl("POST", "storage/$storageId/file/upload", array_merge(["key" => $key, "mimeType" => $mimeType], $params), @$options["headers"] ?? []);
     }
 
     /**

@@ -16,8 +16,8 @@ use AppCelerator\Client;
  */
 class OAuth2Service extends Service
 {
-    public function __construct(private Client $client)
+    public function __construct(private Client $client, array $opts = [])
     {
-        parent::__construct($client, "Oauth2");
+        parent::__construct($client, "Oauth2", $opts);
     }
 }

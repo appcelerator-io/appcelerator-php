@@ -15,8 +15,8 @@ use AppCelerator\Client;
  */
 class CountriesService extends Service
 {
-    public function __construct(private Client $client)
+    public function __construct(private Client $client, array $opts = [])
     {
-        parent::__construct($client, "Countries");
+        parent::__construct($client, "Countries", $opts);
     }
 }

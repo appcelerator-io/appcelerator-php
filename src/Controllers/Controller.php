@@ -9,8 +9,6 @@ use AppCelerator\Interfaces\ServiceInterface;
 use AppCelerator\Utils\Curl;
 use AppCelerator\Utils\Response;
 
-use function AppCelerator\format_uri;
-use function AppCelerator\str_end_with;
 use function AppCelerator\str_not_end_with;
 use function AppCelerator\str_start_with;
 
@@ -23,7 +21,7 @@ class Controller extends Curl implements ControllerInterface
 {
     private null|string|Response $response;
 
-    public function __construct(private ServiceInterface $service, public string $basePath = "")
+    public function __construct(private ServiceInterface $service, public string $basePath = "", private array $opts = [])
     {
         parent::__construct($service->getClient()->getKey());
 
@@ -59,6 +57,8 @@ class Controller extends Curl implements ControllerInterface
 
     public function curl(string $method, string $path, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false) : array
     {
+        $headers = array_merge(@$this->opts["headers"] ?? [], $headers);
+
         $this->response = self::call($method, $this->getEndpointUrl($path), $data, $headers, $verbose, $debug);
 
         $this->handleResponseErrors($this->response);

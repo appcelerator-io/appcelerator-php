@@ -14,8 +14,8 @@ use AppCelerator\Client;
  */
 class FilesService extends Service
 {
-    public function __construct(private Client $client)
+    public function __construct(private Client $client, array $opts = [])
     {
-        parent::__construct($client, "Files");
+        parent::__construct($client, "Files", $opts);
     }
 }

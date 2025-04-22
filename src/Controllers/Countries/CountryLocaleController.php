@@ -11,9 +11,9 @@ use AppCelerator\Interfaces\ServiceInterface;
  */
 class CountryLocaleController extends Controller
 {
-    public function __construct(private ServiceInterface $service)
+    public function __construct(private ServiceInterface $service, array $opts = [])
     {
-        parent::__construct($service, "country-locale/");   
+        parent::__construct($service, "country-locale/", $opts);   
     }
 
     /**

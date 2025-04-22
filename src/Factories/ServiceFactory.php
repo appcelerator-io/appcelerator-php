@@ -11,8 +11,12 @@ use AppCelerator\Exceptions\AppCeleratorException;
  */
 class ServiceFactory
 {
-    public function __construct(private Client $client, private array $services = [])
-    { }
+    private array $services;
+
+    public function __construct(private Client $client, private array $opts = [])
+    {
+        $this->services = [];
+    }
 
     private function addService($name, $class)
     {
@@ -52,6 +56,6 @@ class ServiceFactory
         if(!array_key_exists($name, $this->services))
             $this->initService($name);
 
-        return new $this->services[$name]($this->client);
+        return new $this->services[$name]($this->client, $this->opts);
     }
 }

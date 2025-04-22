@@ -10,9 +10,9 @@ use AppCelerator\Interfaces\ServiceInterface;
  */
 class CRUDController extends Controller
 {
-    public function __construct(private ServiceInterface $service, public string $basePath)
+    public function __construct(private ServiceInterface $service, public string $basePath, array $opts = [])
     {
-        parent::__construct($service, $basePath, $service->getClient()->getKey());
+        parent::__construct($service, $basePath, $opts);
     }
 
     /**
