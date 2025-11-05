@@ -11,42 +11,42 @@ function is_json($input) : bool
     return (json_last_error() == JSON_ERROR_NONE);
 }
 
-function str_start_with(string $haystack, string $needle)
+function str_must_start_with(string $haystack, string $needle)
 {
     if(strlen($haystack) == 0)
         return $haystack;
 
-    if($haystack[0] == $needle)
+    if(substr($haystack, 0, strlen($needle)) == $needle)
         return $haystack;
 
     return "$needle$haystack";
 }
 
-function str_not_start_with(string $haystack, string $needle)
+function str_must_not_start_with(string $haystack, string $needle)
 {
     if(strlen($haystack) > 0)
-        if($haystack[0] == $needle)
+        if(substr($haystack, 0, strlen($needle)) == $needle)
             return substr($haystack, strlen($needle));
 
     return "$haystack";
 }
 
-function str_end_with(string $haystack, string $needle)
+function str_must_end_with(string $haystack, string $needle)
 {
     if(strlen($haystack) == 0)
         return $haystack;
 
-    if($haystack[strlen($haystack) - 1] == $needle)
+    if(substr($haystack, strlen($haystack) - strlen($needle)) == $needle)
         return $haystack;
 
     return "$haystack$needle";
 }
 
-function str_not_end_with(string $haystack, string $needle)
+function str_must_not_end_with(string $haystack, string $needle)
 {
     if(strlen($haystack) > 0)
-        if($haystack[($len = strlen($haystack)) - 1] == $needle)
-            return substr($haystack, 0, $len - 1);
+        if(substr($haystack, strlen($haystack) - strlen($needle)) == $needle)
+            return substr($haystack, 0, strlen($haystack) - strlen($needle));
 
     return "$haystack";
 }
