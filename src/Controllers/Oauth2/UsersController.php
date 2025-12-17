@@ -58,9 +58,9 @@ class UsersController extends CRUDController
      * @param array $options
      * @return array [emailConfirmToken]
      */
-    public function updateEmail($userId, $email, array $options = [])
+    public function changeEmail($userId, $email, array $options = [])
     {
-        return self::curl("POST", "$userId/email", ["email" => $email], @$options["headers"] ?? []);
+        return self::curl("POST", "$userId/change-email", ["email" => $email], @$options["headers"] ?? []);
     }
 
     /**
@@ -82,9 +82,9 @@ class UsersController extends CRUDController
      * @param array $options
      * @return array [code]
      */
-    public function updatePassword($userId, $password, $passwordRepeat, $currentPassword, array $options = [])
+    public function changePassword($userId, $password, $passwordRepeat, $currentPassword, array $options = [])
     {
-        return self::curl("POST", "$userId/password", ["password" => $password, "passwordRepeat" => $passwordRepeat, "currentPassword" => $currentPassword], @$options["headers"] ?? []);
+        return self::curl("POST", "$userId/change-password", ["password" => $password, "passwordRepeat" => $passwordRepeat, "currentPassword" => $currentPassword], @$options["headers"] ?? []);
     }
 
     /**
@@ -114,6 +114,6 @@ class UsersController extends CRUDController
      */
     public function logs(array $params = [], array $options = [])
     {
-        return self::curl("GET", "logs", $params, @$options["headers"] ?? []);
+        return self::curl("GET", "log/", $params, @$options["headers"] ?? []);
     }
 }

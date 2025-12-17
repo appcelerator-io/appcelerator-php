@@ -10,7 +10,7 @@ use AppCelerator\Client;
  * 
  * @property \AppCelerator\Controllers\Files\FilesController $files
  * @property \AppCelerator\Controllers\Files\StoragesController $storages
- * @property \AppCelerator\Controllers\Files\UploadProfilesController $uploadProfiles
+ * @property \AppCelerator\Controllers\Files\UploadPoliciesController $uploadPolicies
  */
 class FilesService extends Service
 {

@@ -9,11 +9,6 @@ use AppCelerator\Interfaces\ServiceInterface;
 use AppCelerator\Utils\Curl;
 use AppCelerator\Utils\Response;
 
-use function AppCelerator\str_must_not_end_with;
-use function AppCelerator\str_must_start_with;
-
-include_once __DIR__ . "../../Library.php";
-
 /**
  * Controller
  */

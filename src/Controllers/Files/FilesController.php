@@ -57,13 +57,23 @@ class FilesController extends Controller
 
     /**
      * @param mixed $id Entity id
+     * @param array $params
+     * @param array $options
+     */
+    public function deleteFiles($storageId, array $params = [], array $options = [])
+    {
+        return self::curl("DELETE", "storage/$storageId/file/", $params, @$options["headers"] ?? []);
+    }
+
+    /**
+     * @param mixed $id Entity id
      * @param mixed $formats comma separated formats, e.g. small,medium,large
      * @param array $params
      * @param array $options
      */
     public function convert($id, string $formats, array $params = [], array $options = [])
     {
-        return self::curl("POST", "file/$id/resize", array_merge(["formats" => $formats], $params), @$options["headers"] ?? []);
+        return self::curl("POST", "file/$id/convert/", array_merge(["formats" => $formats], $params), @$options["headers"] ?? []);
     }
 
     /**

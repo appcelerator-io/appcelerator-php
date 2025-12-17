@@ -116,7 +116,7 @@ abstract class Curl
             $result = is_string($result) && strlen($result) == 0 ? [] : $result;
 
             // Get result
-            $response = is_string($result) && is_json($result) ? new Response($result, $statusCode) : $result;
+            $response = is_string($result) && json_validate($result) ? new Response($result, $statusCode) : $result;
 
             // Not a response
             if($response instanceof Response === false)

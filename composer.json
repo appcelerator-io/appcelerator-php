@@ -21,12 +21,12 @@
         "phpstan/phpstan": "^1.2"
     },
     "autoload": {
-        "files": ["src/Library.php"],
         "psr-4": {
             "AppCelerator\\": "src/"
         }
     },
     "require": {
-        "symfony/http-foundation": "^7.2"
+        "symfony/http-foundation": "^7.2",
+        "gijsbos/stringfuncs": "^1.3"
     }
 }

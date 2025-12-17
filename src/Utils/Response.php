@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace AppCelerator\Utils;
 
-use function AppCelerator\is_json;
-
 /**
  * Response
  */
@@ -54,7 +52,7 @@ class Response extends \Symfony\Component\HttpFoundation\Response
     {
         $data = [];
 
-        if(is_json($this->getContent()))
+        if(json_validate($this->getContent()))
             $data = json_decode($this->getContent(), true);
 
         if($this->hasUrl())

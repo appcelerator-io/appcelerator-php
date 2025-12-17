@@ -55,6 +55,6 @@ class ClientsController extends CRUDController
      */
     public function logs(array $params = [], array $options = [])
     {
-        return self::curl("GET", "logs", $params, @$options["headers"] ?? []);
+        return self::curl("GET", "log/", $params, @$options["headers"] ?? []);
     }
 }
