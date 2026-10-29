@@ -1,4 +1,4 @@
 <?php
 
-// The SDK depends on composer packages (symfony/http-foundation, gijsbos/stringfuncs), run composer install first
+// Loads the SDK through Composer's autoloader, run composer install first
 require __DIR__ . '/vendor/autoload.php';
