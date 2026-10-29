@@ -13,7 +13,7 @@ class UsersController extends CRUDController
 {
     public function __construct(private ServiceInterface $service, array $opts = [])
     {
-        parent::__construct($service, "user/", $opts);   
+        parent::__construct($service, "user/", $opts);
     }
 
     /**
@@ -29,6 +29,7 @@ class UsersController extends CRUDController
     /**
      * @param string $email User email
      * @param string $password User password
+     * @param array $params name, givenName, familyName
      * @param array $options
      */
     public function create($email, $password, $params = [], array $options = [])
@@ -39,8 +40,9 @@ class UsersController extends CRUDController
     /**
      * @param string $email User email
      * @param string $password User password
-     * @param array $options: scopes => [scope1,...]
-     * @return array [tokenData]
+     * @param array $params scope (space delimited, all granted scopes when omitted)
+     * @param array $options
+     * @return array [tokenData] or [flow, mfa_token] when MFA is enabled
      */
     public function authenticate($email, $password, array $params = [], array $options = [])
     {
@@ -53,7 +55,7 @@ class UsersController extends CRUDController
     }
 
     /**
-     * @param string $userId User ID 
+     * @param string $userId User ID
      * @param string $email User email
      * @param array $options
      * @return array [emailConfirmToken]
@@ -64,7 +66,7 @@ class UsersController extends CRUDController
     }
 
     /**
-     * @param string $userId User ID 
+     * @param string $userId User ID
      * @param string $emailConfirmToken User emailConfirmToken
      * @param array $options
      * @return array [code]
@@ -75,7 +77,7 @@ class UsersController extends CRUDController
     }
 
     /**
-     * @param string $userId User ID 
+     * @param string $userId User ID
      * @param string $password User password
      * @param string $passwordRepeat Repeat password
      * @param string $currentPassword Current password
@@ -98,22 +100,30 @@ class UsersController extends CRUDController
     }
 
     /**
-     * @param string $email User email
+     * @param string $identifier Identifier received from requestPasswordReset
+     * @param string $token Token received from requestPasswordReset
+     * @param string $password New password
+     * @param null|string $passwordRepeat Repeat new password
      * @param array $options
-     * @return array [userId,identifier,token]
      */
-    public function resetPassword($identifier, $token, $password, array $options = [])
+    public function resetPassword($identifier, $token, $password, $passwordRepeat = null, array $options = [])
     {
-        return self::curl("POST", "reset-password", ["identifier" => $identifier, "token" => $token, "password" => $password], @$options["headers"] ?? []);
+        $params = ["identifier" => $identifier, "token" => $token, "password" => $password];
+
+        if($passwordRepeat !== null)
+            $params["passwordRepeat"] = $passwordRepeat;
+
+        return self::curl("POST", "reset-password", $params, @$options["headers"] ?? []);
     }
 
     /**
-     * @param array $params
+     * @param string $userId User ID
+     * @param array $params fields, orderBy, orderByOrder <asc,desc>, limit, offset, page
      * @param array $options
      * @return array
      */
-    public function logs(array $params = [], array $options = [])
+    public function logs($userId, array $params = [], array $options = [])
     {
-        return self::curl("GET", "log/", $params, @$options["headers"] ?? []);
+        return self::curl("GET", "$userId/log/", $params, @$options["headers"] ?? [])["data"];
     }
 }

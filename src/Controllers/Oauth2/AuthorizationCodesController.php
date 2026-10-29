@@ -8,12 +8,13 @@ use AppCelerator\Interfaces\ServiceInterface;
 
 /**
  * AuthorizationCodesController
+ *  Exchange an authorization code for a token with TokenController::authorizationCode
  */
 class AuthorizationCodesController extends Controller
 {
     public function __construct(private ServiceInterface $service, array $opts = [])
     {
-        parent::__construct($service, "authorization-code/", $opts);   
+        parent::__construct($service, "authorization-code/", $opts);
     }
 
     /**
@@ -24,14 +25,5 @@ class AuthorizationCodesController extends Controller
     public function get($id, array $params = [], array $options = [])
     {
         return self::curl("GET", "$id/", $params, @$options["headers"] ?? [])["data"];
-    }
-
-    /**
-     * @param string $code Authorization code
-     * @param array $options
-     */
-    public function exchange($code, array $options = [])
-    {
-        return self::curl("POST", "exchange", ["code" => $code], @$options["headers"] ?? []);
     }
 }

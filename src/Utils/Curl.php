@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace AppCelerator\Utils;
 
-use AppCelerator\Exceptions\AppCeleratorHttpException;
 use Exception;
 
 /**
@@ -50,12 +49,12 @@ abstract class Curl
         if(is_string($this->token) && !is_string(@$headers["Authorization"]))
             $headers["Authorization"] = "Bearer " . $this->token;
 
-        if(count($headers))
-        {
-            $_headers = [];
-            foreach($headers as $key => $value)
-                $_headers[] = "$key: $value";
-        }
+        $_headers = [];
+        foreach($headers as $key => $value)
+            $_headers[] = "$key: $value";
+
+        // Response headers, lowercase name => value
+        $responseHeaders = [];
 
         $curlOptions = array(
             CURLOPT_URL => $url,
@@ -64,6 +63,14 @@ abstract class Curl
             CURLOPT_MAXREDIRS => 5,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_HTTPHEADER => $_headers,
+            CURLOPT_HEADERFUNCTION => function($curl, string $header) use (&$responseHeaders) {
+                $parts = explode(":", $header, 2);
+
+                if(count($parts) === 2)
+                    $responseHeaders[strtolower(trim($parts[0]))] = trim($parts[1]);
+
+                return strlen($header);
+            },
         );
 
         // Add params
@@ -88,7 +95,7 @@ abstract class Curl
         if($result === false)
         {
             if(!$debug)
-                throw new Exception("Curl failed");
+                throw new Exception("Curl failed: " . curl_error($curl) . " ($method $url)");
 
             // Debug
             $debugData = [
@@ -112,15 +119,8 @@ abstract class Curl
         {
             $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
-            // Result empty, set to empty array instead of leaving string empty
-            $result = is_string($result) && strlen($result) == 0 ? [] : $result;
-
-            // Get result
-            $response = is_string($result) && json_validate($result) ? new Response($result, $statusCode) : $result;
-
-            // Not a response
-            if($response instanceof Response === false)
-                throw new AppCeleratorHttpException($response);
+            // Empty and non JSON bodies are a Response too, Controller::handleResponseErrors decides if it is an error
+            $response = new Response(is_string($result) ? $result : "", $statusCode, $responseHeaders);
 
             // Add information
             if(defined('CURLINFO_EFFECTIVE_METHOD'))

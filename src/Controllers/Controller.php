@@ -33,16 +33,26 @@ class Controller extends Curl implements ControllerInterface
         return $this->response;
     }
 
+    private static function mustStartWith(string $input, string $prefix) : string
+    {
+        return str_starts_with($input, $prefix) ? $input : "$prefix$input";
+    }
+
+    private static function mustNotEndWith(string $input, string $suffix) : string
+    {
+        return str_ends_with($input, $suffix) ? substr($input, 0, -strlen($suffix)) : $input;
+    }
+
     private function getEndpointUrl(string $path)
     {
         $url = [];
-        $url[] = str_must_not_end_with($this->service->getServiceUrl(), "/");
-        $url[] = $basePath = str_must_start_with($this->basePath, "/");
+        $url[] = self::mustNotEndWith($this->service->getServiceUrl(), "/");
+        $url[] = $basePath = self::mustStartWith($this->basePath, "/");
 
         if(strlen($path) > 0)
         {
             if(!str_ends_with($basePath, "/"))
-                $path = str_must_start_with($path, "/");
+                $path = self::mustStartWith($path, "/");
         }
 
         $url[] = $path;
@@ -63,7 +73,8 @@ class Controller extends Curl implements ControllerInterface
 
     public function handleResponseErrors(Response $response)
     {
-        if(!$response->isSuccessful())
+        // An empty body is a valid response (e.g. 204), any other body must be JSON
+        if(!$response->isSuccessful() || (strlen($response->getContent()) > 0 && !$response->isJson()))
             throw new AppCeleratorHttpException($response);
     }
 }
