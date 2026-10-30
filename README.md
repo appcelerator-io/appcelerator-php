@@ -262,8 +262,8 @@ An assignment can be **pending**, for example when it is requested from another 
 $client->oauth2->roles->approve($userId, 'accountant');
 $client->oauth2->roles->reject($userId, 'accountant');
 
-$client->oauth2->scopes->approve($scopeId, $userId);
-$client->oauth2->scopes->reject($scopeId, $userId);
+$client->oauth2->scopes->approve($userId, 'invoice:read');
+$client->oauth2->scopes->reject($userId, 'invoice:read');
 ```
 
 ### Identity providers

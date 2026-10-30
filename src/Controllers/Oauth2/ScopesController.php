@@ -59,24 +59,32 @@ class ScopesController extends CRUDController
     }
 
     /**
-     * Grants the permission of a scope assigned to subject
-     * @param string $scopeId ID of scope
+     * Approves a pending scope assignment of subject, only the owner of the scope can decide
      * @param string $subjectId ID of subject
+     * @param string $scope Scope ID or value
      * @param array $options
      */
-    public function approve($scopeId, $subjectId, array $options = [])
+    public function approve($subjectId, $scope, array $options = [])
     {
-        return self::curl("POST", "$scopeId/approve", ["subjectId" => $subjectId], @$options["headers"] ?? []);
+        return self::curl("POST", "approve", self::assignmentParams($subjectId, $scope), @$options["headers"] ?? []);
     }
 
     /**
-     * Rejects the permission of a scope assigned to subject
-     * @param string $scopeId ID of scope
+     * Rejects a pending scope assignment of subject, only the owner of the scope can decide
      * @param string $subjectId ID of subject
+     * @param string $scope Scope ID or value
      * @param array $options
      */
-    public function reject($scopeId, $subjectId, array $options = [])
+    public function reject($subjectId, $scope, array $options = [])
     {
-        return self::curl("POST", "$scopeId/reject", ["subjectId" => $subjectId], @$options["headers"] ?? []);
+        return self::curl("POST", "reject", self::assignmentParams($subjectId, $scope), @$options["headers"] ?? []);
+    }
+
+    /**
+     * approve and reject take the scope as scopeId or value
+     */
+    private static function assignmentParams($subjectId, $scope) : array
+    {
+        return ["subjectId" => $subjectId, (preg_match("/^scope_[0-9a-zA-Z]{12,24}$/", (string) $scope) ? "scopeId" : "value") => $scope];
     }
 }
