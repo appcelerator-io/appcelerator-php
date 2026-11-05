@@ -58,12 +58,12 @@ echo $user['email'];
 ## Configuration
 
 ```php
-$client = new Client(string $accessToken, array $serviceUrls);
+$client = new Client(string|Closure $accessToken, array $serviceUrls);
 ```
 
 | Argument | Description |
 |---|---|
-| `$accessToken` | Sent as `Authorization: Bearer <token>` on every request. Pass an empty string for requests that do not need a token, such as token requests. |
+| `$accessToken` | Sent as `Authorization: Bearer <token>` on every request. Pass an empty string for requests that do not need a token, such as token requests. Pass a function to use a token per service, see below. |
 | `$serviceUrls` | The base URL per service, e.g. `['oauth2' => 'https://myapp.oauth2.eu.appcelerator.io']`. |
 
 ### Service URLs
@@ -81,6 +81,14 @@ https://<tenant>.<service>.<region>
 | `region` | The region your tenant is hosted in | `eu.appcelerator.io` |
 
 For example, the OAuth2 service of tenant `myapp` in the EU region is `https://myapp.oauth2.eu.appcelerator.io`.
+
+### A token per service
+
+A token can be for one service only (requested with `scope=api://<service>/.default`). Pass a function that returns the token for a service; it is called with the service name (`oauth2`, `countries`, `files`) each time a resource of that service is used, so it can cache and renew its tokens:
+
+```php
+$client = new Client(fn(string $service) => $tokens->get("api://$service-service"), $serviceUrls);
+```
 
 ### Per-request options
 
@@ -254,6 +262,13 @@ $client->oauth2->roles->revoke($userId, 'accountant');
 
 // Every scope of a subject, directly and through roles
 $scopes = $client->oauth2->scopes->subject($userId);
+```
+
+A role can be assigned **for a tenant**: the user then acts in that tenant through a token exchange with `tenant`, with the scopes of that role. Only the owner of the role assigns it for a tenant, to its own users. `revoke`, `approve` and `reject` take the same `tenant`:
+
+```php
+$client->oauth2->roles->assign($userId, 'oauth2-federated-access-scopes', tenant: 'myapp.dev');
+$client->oauth2->roles->revoke($userId, 'oauth2-federated-access-scopes', tenant: 'myapp.dev');
 ```
 
 An assignment can be **pending**, for example when it is requested from another tenant. A pending assignment gives no access until the owner of the scope or role approves it:

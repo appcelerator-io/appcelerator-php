@@ -12,4 +12,5 @@ interface ServiceInterface
 {
     public function getClient() : Client;
     public function getServiceUrl() : string;
+    public function getName() : string;
 }

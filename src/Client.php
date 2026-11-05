@@ -17,16 +17,32 @@ class Client extends ServiceFactory
 {
     private array $serviceUrls;
 
-    public function __construct(private string $key, array $serviceUrls = [], private array $opts = [])
+    /**
+     * @param string|\Closure $key  the access token for every service, or a function that returns the token for a service:
+     *                              fn(string $service): string, called with the service name ("oauth2", "countries", "files")
+     *                              each time a controller of that service is used, so it can cache and renew tokens
+     */
+    public function __construct(private string|\Closure $key, array $serviceUrls = [], private array $opts = [])
     {
         parent::__construct($this, $opts);
 
         $this->initServiceUrls($serviceUrls);
     }
 
-    public function getKey()
+    /**
+     * The access token for $service (lowercase service name), the same for every service when the key is a string
+     */
+    public function getKey(null|string $service = null) : string
     {
-        return $this->key;
+        if(is_string($this->key))
+            return $this->key;
+
+        $key = ($this->key)(strtolower((string) $service));
+
+        if(!is_string($key))
+            throw new AppCeleratorException("Invalid key for service '$service', the key function must return a string");
+
+        return $key;
     }
 
     private function initServiceUrls(array $serviceUrls)

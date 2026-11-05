@@ -18,7 +18,7 @@ class Controller extends Curl implements ControllerInterface
 
     public function __construct(private ServiceInterface $service, public string $basePath = "", private array $opts = [])
     {
-        parent::__construct($service->getClient()->getKey());
+        parent::__construct($service->getClient()->getKey($service->getName()));
 
         $this->response = null;
     }

@@ -30,20 +30,22 @@ class RolesController extends CRUDController
      * @param string $subjectId ID of subject
      * @param string $role Role ID or name
      * @param array $options
+     * @param null|string $tenant The tenant (identifier) the subject holds the role for, the subject acts in that tenant through a token exchange with tenant. Only the owner of the role assigns it for a tenant, to its own users. Null for the owner itself
      */
-    public function assign($subjectId, $role, array $options = [])
+    public function assign($subjectId, $role, array $options = [], null|string $tenant = null)
     {
-        return self::curl("POST", "assign", ["subjectId" => $subjectId, "role" => $role], @$options["headers"] ?? []);
+        return self::curl("POST", "assign", self::withTenant(["subjectId" => $subjectId, "role" => $role], $tenant), @$options["headers"] ?? []);
     }
 
     /**
      * @param string $subjectId ID of subject
      * @param string $role Role ID or name
      * @param array $options
+     * @param null|string $tenant The tenant (identifier) the subject holds the role for, the subject acts in that tenant through a token exchange with tenant. Only the owner of the role assigns it for a tenant, to its own users. Null for the owner itself
      */
-    public function revoke($subjectId, $role, array $options = [])
+    public function revoke($subjectId, $role, array $options = [], null|string $tenant = null)
     {
-        return self::curl("POST", "revoke", ["subjectId" => $subjectId, "role" => $role], @$options["headers"] ?? []);
+        return self::curl("POST", "revoke", self::withTenant(["subjectId" => $subjectId, "role" => $role], $tenant), @$options["headers"] ?? []);
     }
 
     /**
@@ -51,10 +53,11 @@ class RolesController extends CRUDController
      * @param string $subjectId ID of subject
      * @param string $role Role ID or value
      * @param array $options
+     * @param null|string $tenant The tenant (identifier) the subject holds the role for, the subject acts in that tenant through a token exchange with tenant. Only the owner of the role assigns it for a tenant, to its own users. Null for the owner itself
      */
-    public function approve($subjectId, $role, array $options = [])
+    public function approve($subjectId, $role, array $options = [], null|string $tenant = null)
     {
-        return self::curl("POST", "approve", self::assignmentParams($subjectId, $role), @$options["headers"] ?? []);
+        return self::curl("POST", "approve", self::withTenant(self::assignmentParams($subjectId, $role), $tenant), @$options["headers"] ?? []);
     }
 
     /**
@@ -62,10 +65,11 @@ class RolesController extends CRUDController
      * @param string $subjectId ID of subject
      * @param string $role Role ID or value
      * @param array $options
+     * @param null|string $tenant The tenant (identifier) the subject holds the role for, the subject acts in that tenant through a token exchange with tenant. Only the owner of the role assigns it for a tenant, to its own users. Null for the owner itself
      */
-    public function reject($subjectId, $role, array $options = [])
+    public function reject($subjectId, $role, array $options = [], null|string $tenant = null)
     {
-        return self::curl("POST", "reject", self::assignmentParams($subjectId, $role), @$options["headers"] ?? []);
+        return self::curl("POST", "reject", self::withTenant(self::assignmentParams($subjectId, $role), $tenant), @$options["headers"] ?? []);
     }
 
     /**
@@ -74,5 +78,13 @@ class RolesController extends CRUDController
     private static function assignmentParams($subjectId, $role) : array
     {
         return ["subjectId" => $subjectId, (preg_match("/^role_[0-9a-zA-Z]{12,24}$/", (string) $role) ? "roleId" : "value") => $role];
+    }
+
+    /**
+     * Adds the tenant, when given
+     */
+    private static function withTenant(array $params, null|string $tenant) : array
+    {
+        return $tenant !== null ? $params + ["tenant" => $tenant] : $params;
     }
 }

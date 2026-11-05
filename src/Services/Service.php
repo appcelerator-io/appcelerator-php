@@ -25,6 +25,11 @@ class Service implements ServiceInterface
         return $this->client;
     }
 
+    public function getName() : string
+    {
+        return $this->name;
+    }
+
     public function getServiceUrl() : string
     {
         return $this->client->getServiceUrl($this->name);
