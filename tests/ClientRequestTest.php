@@ -198,6 +198,33 @@ final class ClientRequestTest extends TestCase
         $this->assertNotSame($data["authorization"], $own["authorization"]);
     }
 
+    public function testAServiceAddedAtRuntimeSharesTheTokens() : void
+    {
+        $client = $this->client();
+
+        $clusterA = $client->withService("kubernetes-client", ["url" => self::$base . "/cluster-a", "resource" => "api://kubernetes-client"]);
+        $clusterB = $client->withService("kubernetes-client", ["url" => self::$base . "/cluster-b", "resource" => "api://kubernetes-client"]);
+
+        $a = $clusterA->service("kubernetes-client")->request("GET", "/pods/")->json()["data"];
+        $b = $clusterB->service("kubernetes-client")->request("GET", "/pods/")->json()["data"];
+
+        $this->assertSame(["/cluster-a/pods/", "/cluster-b/pods/"], [$a["path"], $b["path"]]);
+        $this->assertSame(["Bearer t1", "Bearer t1"], [$a["authorization"], $b["authorization"]]);
+        $this->assertSame(["api://kubernetes-client/.default"], array_column(self::tokenRequests(), "scope"));
+        $this->assertFalse($client->hasService("kubernetes-client"), "The client itself is unchanged");
+
+        $this->expectException(AppCeleratorException::class);
+        $clusterA->service("kubernetes-client")->request("GET", self::$base . "/cluster-b/pods/");
+    }
+
+    public function testOneParameterOfAResponse() : void
+    {
+        $response = $this->client()->backup->request("GET", "/x/");
+
+        $this->assertSame("GET", $response->getParameter("data")["method"]);
+        $this->assertSame("none", $response->getParameter("missing", "none"));
+    }
+
     public function testATenantNeedsAUser() : void
     {
         $this->expectException(AppCeleratorException::class);

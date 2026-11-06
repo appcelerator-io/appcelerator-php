@@ -58,6 +58,17 @@ final class ServiceConfigTest extends TestCase
         $this->assertTrue($service->matchesUrl("https://myapp.oauth2.dev.eu.appcelerator.io/role/"));
     }
 
+    public function testExtraBaseUrlsAndRegionHostsAreOfTheService() : void
+    {
+        $service = ServiceConfig::from("oauth2", ["url" => "http://apc-oauth2-service.svc.cluster.local", "urls" => ["http://localhost/apc-oauth2-service/"]]);
+
+        $this->assertSame(["http://localhost/apc-oauth2-service"], $service->urls);
+        $this->assertTrue($service->matchesUrl("http://localhost/apc-oauth2-service/service-domain/"));
+        $this->assertTrue($service->matchesUrl("http://apc-oauth2-service.svc.cluster.local/role/"));
+        $this->assertTrue($service->matchesUrl("https://oauth2.eu.appcelerator.io/service-domain/"), "A region without domain");
+        $this->assertFalse($service->matchesUrl("http://localhost/apc-files-service/"));
+    }
+
     public function testUrlsOfOtherHostsAreRefused() : void
     {
         $service = ServiceConfig::from("oauth2", "http://localhost/apc-oauth2-service");

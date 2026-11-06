@@ -99,9 +99,10 @@ Settings per service:
 | Setting | Default | Description |
 |---|---|---|
 | `url` | required | The base URL of the service |
+| `urls` | none | Other base URLs of the service that may receive its token, e.g. an internal or test URL |
 | `resource` | `api://<name>-service` | The resourceURI of the service at the OAuth2 service |
 | `scope` | `<resource>/.default` | The scopes requested for its token. The default returns every scope your client holds on that service |
-| `hosts` | `*.<name>.*.appcelerator.io`, `*.<name>.*.*.appcelerator.io` | Other hosts of the service (regional and tenant URLs) that may receive its token. `*` is one DNS label, https only |
+| `hosts` | `<name>.*.appcelerator.io`, `*.<name>.*.appcelerator.io`, `*.<name>.*.*.appcelerator.io` | Other hosts of the service (regional and tenant URLs) that may receive its token. `*` is one DNS label, https only |
 
 ### From environment variables
 
@@ -162,6 +163,14 @@ $response = $client->request('GET', 'https://myapp.files.eu.appcelerator.io/file
 
 A URL that is not of a configured service is refused, so a token is never sent anywhere else.
 
+A service whose URL is only known at runtime, such as one per cluster, is added with `withService()`. It returns a new client that shares the token cache, so every cluster gets the same token for that resource:
+
+```php
+$cluster = $client->withService('kubernetes-client', ['url' => $clientApiUrl, 'resource' => 'api://kubernetes-client']);
+
+$cluster->service('kubernetes-client')->request('GET', '/pods/');
+```
+
 | Option | Description |
 |---|---|
 | `query` | Query parameters |
@@ -182,6 +191,7 @@ A URL that is not of a configured service is refused, so a token is never sent a
 $response->status();          // 200
 $response->isSuccessful();
 $response->json();            // the decoded JSON body
+$response->getParameter('data');
 $response->body();            // the raw body
 $response->header('content-type');
 ```
@@ -530,6 +540,13 @@ New in 2.0:
 - A rejected token is replaced once, also for predefined endpoints.
 - Role and scope assignments are a sub-resource: `/role/{roleIdOrValue}/assignment/` and `/scope/{scopeIdOrValue}/assignment/`. `roles->assignments()` and `scopes->assignments()` list them, `assign`, `revoke`, `approve` and `reject` keep their arguments. This needs an OAuth2 service with these endpoints.
 - Service URLs keep their case (1.x lowercased them).
+
+New in 2.1:
+
+- `withService()`: a service added at runtime, e.g. a URL per cluster, sharing the token cache.
+- `urls` per service: more base URLs that may receive its token.
+- `<name>.*.appcelerator.io` (a region without tenant) is one of the default hosts of a service.
+- `Response::getParameter()`.
 
 ## License
 

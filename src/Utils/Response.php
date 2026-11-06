@@ -95,6 +95,15 @@ class Response
     }
 
     /**
+     * getParameter
+     *  One element of the decoded JSON body, $default when it is not there
+     */
+    public function getParameter(string $name, mixed $default = null) : mixed
+    {
+        return array_key_exists($name, $parameters = $this->getParameters()) ? $parameters[$name] : $default;
+    }
+
+    /**
      * status
      */
     public function status() : int

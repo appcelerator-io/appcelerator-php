@@ -28,7 +28,7 @@ class Client extends ServiceFactory
     private null|string|\Closure $key = null;
     private null|Config $config = null;
 
-    /** @var ServiceConfig[] name => config, without a Config */
+    /** @var ServiceConfig[] name => config: without a Config the services, with one those added by withService() */
     private array $serviceConfigs = [];
 
     private null|TokenProvider $tokens = null; // of the client itself
@@ -118,6 +118,24 @@ class Client extends ServiceFactory
         $client = clone $this;
         $client->tenant = $tenant;
         $client->headers = Headers::merge($this->headers, ["identifier" => $tenant]);
+
+        return $client;
+    }
+
+    /**
+     * withService
+     *  A client with one more service (or another config for one), e.g. a service whose URL is only known at runtime such as
+     *  the API of a cluster: withService("kubernetes-client", ["url" => $clientApiUrl, "resource" => "api://kubernetes-client"]).
+     *  It shares the token cache of this client: every cluster gets the same token for api://kubernetes-client.
+     *
+     * @param string|array|ServiceConfig $config the URL, or the settings of ServiceConfig::from
+     */
+    public function withService(string $name, string|array|ServiceConfig $config) : static
+    {
+        $service = $config instanceof ServiceConfig ? $config : ServiceConfig::from($name, $config);
+
+        $client = clone $this;
+        $client->serviceConfigs[$service->name] = $service;
 
         return $client;
     }
@@ -270,6 +288,6 @@ class Client extends ServiceFactory
      */
     private function serviceConfigs() : array
     {
-        return $this->config !== null ? $this->config->services() : $this->serviceConfigs;
+        return $this->config !== null ? array_merge($this->config->services(), $this->serviceConfigs) : $this->serviceConfigs;
     }
 }
