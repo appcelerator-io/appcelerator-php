@@ -1,6 +1,6 @@
 # AppCelerator PHP SDK
 
-The official PHP library for the AppCelerator APIs. Use it to request access tokens and to manage the users, clients, scopes, roles and identity providers of your AppCelerator OAuth2 service.
+The official PHP library for the AppCelerator APIs. Use it to call the AppCelerator services (OAuth2, Countries, Files, ...) from your backend: the SDK requests, caches and renews an access token per service for you, calls the predefined endpoints of a service, and sends any other request to a service with its token.
 
 ## Contents
 
@@ -8,16 +8,21 @@ The official PHP library for the AppCelerator APIs. Use it to request access tok
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [Configuration](#configuration)
+- [Calling any endpoint](#calling-any-endpoint)
+- [Acting for a user or a tenant](#acting-for-a-user-or-a-tenant)
+- [Tokens](#tokens)
 - [Authentication](#authentication)
 - [Resources](#resources)
 - [Responses](#responses)
 - [Error handling](#error-handling)
+- [Upgrading from 1.x](#upgrading-from-1x)
 - [License](#license)
 
 ## Requirements
 
 - PHP 8.3 or later
 - The `curl` and `json` extensions
+- Optional: the `apcu` extension, to share cached tokens between php-fpm workers
 
 The SDK has no other dependencies.
 
@@ -39,32 +44,79 @@ require __DIR__ . '/vendor/autoload.php';
 
 ```php
 use AppCelerator\Client;
+use AppCelerator\Config;
+use AppCelerator\Auth\Credentials;
 
-$oauth2Url = 'https://myapp.oauth2.eu.appcelerator.io';
+$client = new Client(new Config(
+    tokenUrl:    'https://myapp.oauth2.eu.appcelerator.io/token',
+    credentials: Credentials::of('<client-id>', '<client-secret>'),
+    services: [
+        'oauth2'    => 'https://myapp.oauth2.eu.appcelerator.io',
+        'countries' => 'https://myapp.countries.eu.appcelerator.io',
+    ],
+));
 
-// 1. Request an access token for your client
-$tokenClient = new Client('', ['oauth2' => $oauth2Url]);
+// Predefined endpoints
+$user    = $client->oauth2->users->get('user_Q7zCI6ZMjQWFojQP5lCPAXF8s5AxRvY');
+$country = $client->countries->countries->get('nl');
 
-$token = $tokenClient->oauth2->token->clientCredentials('<client-id>', '<client-secret>');
-
-// 2. Call the API with the access token
-$client = new Client($token['access_token'], ['oauth2' => $oauth2Url]);
-
-$user = $client->oauth2->users->get('user_Q7zCI6ZMjQWFojQP5lCPAXF8s5AxRvY');
-
-echo $user['email'];
+// Any endpoint of a service
+$response = $client->countries->request('GET', '/country/nl/', ['query' => ['fields' => 'name']]);
+$response->json();
 ```
+
+Every service gets its own token, requested the first time it is used, cached and renewed before it expires.
 
 ## Configuration
 
 ```php
-$client = new Client(string|Closure $accessToken, array $serviceUrls);
+$client = new Client(new Config(
+    tokenUrl:       'https://myapp.oauth2.eu.appcelerator.io/token',
+    credentials:    Credentials::fromEnv('APC_CLIENT_ID', 'APC_CLIENT_SECRET'),
+    services: [
+        'oauth2'    => 'https://myapp.oauth2.eu.appcelerator.io',
+        'countries' => ['url' => 'https://myapp.countries.eu.appcelerator.io', 'scope' => 'countries.country:read'],
+        'billing'   => 'https://myapp.billing.eu.appcelerator.io', // no predefined endpoints: request() only
+    ],
+    headers:        ['identifier' => 'myapp.dev'],  // sent with every request
+    tokenStore:     null,                           // where tokens are cached, see Tokens
+    tokenCacheFile: null,
+    timeout:        30,                              // seconds per request
+));
 ```
 
 | Argument | Description |
 |---|---|
-| `$accessToken` | Sent as `Authorization: Bearer <token>` on every request. Pass an empty string for requests that do not need a token, such as token requests. Pass a function to use a token per service, see below. |
-| `$serviceUrls` | The base URL per service, e.g. `['oauth2' => 'https://myapp.oauth2.eu.appcelerator.io']`. |
+| `tokenUrl` | The token endpoint of your OAuth2 service |
+| `credentials` | Your client: `Credentials::of($clientId, $clientSecret)` or `Credentials::fromEnv($clientIdVariable, $clientSecretVariable)` |
+| `services` | Per service its URL, or its settings (below). The name is how you reach it: `$client->countries`, `$client->service('billing')` |
+| `headers` | Headers sent with every request |
+| `tokenStore` / `tokenCacheFile` | Where tokens are cached, see [Tokens](#tokens) |
+| `timeout` | Seconds per request |
+
+Settings per service:
+
+| Setting | Default | Description |
+|---|---|---|
+| `url` | required | The base URL of the service |
+| `resource` | `api://<name>-service` | The resourceURI of the service at the OAuth2 service |
+| `scope` | `<resource>/.default` | The scopes requested for its token. The default returns every scope your client holds on that service |
+| `hosts` | `*.<name>.*.appcelerator.io`, `*.<name>.*.*.appcelerator.io` | Other hosts of the service (regional and tenant URLs) that may receive its token. `*` is one DNS label, https only |
+
+### From environment variables
+
+`Config::fromEnv()` reads the usual variables of the platform:
+
+| Variable | Used as |
+|---|---|
+| `APC_AUTH_TOKEN_URI` | `tokenUrl` (otherwise `OAUTH2_SERVICE_URI` + `/token`) |
+| `APC_CLIENT_ID`, `APC_CLIENT_SECRET` | `credentials` |
+| `<NAME>_SERVICE_URI` | a service per variable: `OAUTH2_SERVICE_URI` is `oauth2`, `FILES_SERVICE_URI` is `files` |
+| `RESOURCE_DOMAIN_IDENTIFIER` | the `identifier` header |
+
+```php
+$client = new Client(Config::fromEnv(['countries' => ['scope' => 'countries.country:read']]));
+```
 
 ### Service URLs
 
@@ -82,22 +134,98 @@ https://<tenant>.<service>.<region>
 
 For example, the OAuth2 service of tenant `myapp` in the EU region is `https://myapp.oauth2.eu.appcelerator.io`.
 
-### A token per service
-
-A token can be for one service only (requested with `scope=api://<service>/.default`). Pass a function that returns the token for a service; it is called with the service name (`oauth2`, `countries`, `files`) each time a resource of that service is used, so it can cache and renew its tokens:
-
-```php
-$client = new Client(fn(string $service) => $tokens->get("api://$service-service"), $serviceUrls);
-```
-
 ### Per-request options
 
-Every method accepts an `$options` array as its last argument. Use `headers` to add or override request headers, for example to call an endpoint with the token of a user instead of the token of the client:
+Every method of a predefined endpoint accepts an `$options` array as its last argument. Use `headers` to add or override request headers, for example to call an endpoint with the token of a user instead of the token of the client:
 
 ```php
 $profile = $client->oauth2->users->self(options: [
     'headers' => ['Authorization' => 'Bearer ' . $userAccessToken],
 ]);
+```
+
+## Calling any endpoint
+
+`request()` calls any endpoint of a service, also one without predefined endpoints, with the token of that service:
+
+```php
+$response = $client->countries->request('GET', '/country/nl/');
+$response = $client->billing->request('POST', '/invoice/', ['json' => ['amount' => 100]]);
+$response = $client->service('billing')->request('DELETE', "/invoice/$invoiceId/");
+
+// An absolute URL of the service, e.g. another region or tenant of it
+$response = $client->oauth2->request('POST', 'https://other.oauth2.us.appcelerator.io/service-domain/', ['form' => [...]]);
+
+// Or let the client find the service of a URL
+$response = $client->request('GET', 'https://myapp.files.eu.appcelerator.io/file/abc/');
+```
+
+A URL that is not of a configured service is refused, so a token is never sent anywhere else.
+
+| Option | Description |
+|---|---|
+| `query` | Query parameters |
+| `json` | A body sent as JSON |
+| `form` | A body sent as `application/x-www-form-urlencoded` |
+| `multipart` | Multipart fields, a value may be a `CURLFile` |
+| `body` | A raw body (string); set its `Content-Type` in `headers` |
+| `headers` | Headers on top of those of the client |
+| `token` | A token of your own instead of the one of the client |
+| `auth` | `false`: send no token |
+| `timeout` | Seconds |
+| `retry` | `false`: no second attempt when the service rejects the token |
+| `throw` | `true`: an unsuccessful response throws `AppCeleratorHttpException` |
+
+`request()` returns the response whatever its status, unless `throw` is set:
+
+```php
+$response->status();          // 200
+$response->isSuccessful();
+$response->json();            // the decoded JSON body
+$response->body();            // the raw body
+$response->header('content-type');
+```
+
+## Acting for a user or a tenant
+
+A backend that serves signed-in users (e.g. a backend for frontend) calls the services as that user: the token of the user is exchanged for a token of the same user per service (token exchange, RFC 8693). Your client needs delegated permissions for those scopes.
+
+```php
+$user = $client->onBehalfOf($userAccessToken, $sessionStore);
+
+$user->files->request('GET', '/file/');
+$user->oauth2->users->self();
+```
+
+`$sessionStore` is a `TokenStore` for the tokens of that user, e.g. in their session. Without it they are kept in memory for the current process. The tokens of users never go into the shared store of the client.
+
+In a tenant, the user acts with the roles they hold for that tenant. The token is of the tenant and the `identifier` header of the requests is the tenant:
+
+```php
+$tenant = $client->onBehalfOf($userAccessToken, $sessionStore)->forTenant('customer.dev');
+
+$tenant->oauth2->roles->list();
+```
+
+`onBehalfOf()` and `forTenant()` return a new client, the original one is unchanged.
+
+## Tokens
+
+The client requests a token per service with the client credentials grant and `scope` of the service, caches it and renews it 60 seconds before it expires. When the service rejects the token (401, e.g. signed with a key that was rotated), the client drops it, requests a new one and sends the request once more.
+
+Tokens are cached in this process and in the token store:
+
+| Store | When |
+|---|---|
+| `ApcuTokenStore` | Default when APCu is enabled (php-fpm): shared by the workers |
+| `FileTokenStore` | Default otherwise (CLI, development): a JSON file in the temp directory, readable by its owner only. `tokenCacheFile` sets its path |
+| `MemoryTokenStore` | This process only, e.g. tests |
+| Your own | Implement `AppCelerator\Auth\Store\TokenStore`, e.g. Redis or a session |
+
+One process requests a token, the others wait for it. Drop every cached token, e.g. after your OAuth2 service was installed again:
+
+```php
+$client->tokens()->forgetAll();
 ```
 
 ## Authentication
@@ -358,7 +486,7 @@ $response->getHeader('Content-Type');
 
 ## Error handling
 
-A request that fails throws an `AppCelerator\Exceptions\AppCeleratorHttpException`:
+A predefined endpoint that fails throws an `AppCelerator\Exceptions\AppCeleratorHttpException`, `request()` does with the `throw` option. A token request that fails always throws, `getOAuthError()` tells why:
 
 ```php
 use AppCelerator\Exceptions\AppCeleratorHttpException;
@@ -384,6 +512,24 @@ try {
 | `getResponse()` | The HTTP response |
 
 A response that is not JSON, such as an HTML error page from a proxy, also throws `AppCeleratorHttpException`. A request that cannot reach the server at all throws a regular `Exception` with the curl error.
+
+## Upgrading from 1.x
+
+A client with a fixed token, or a function that returns a token per service, still works as in 1.x:
+
+```php
+$client = new Client($accessToken, ['oauth2' => 'https://myapp.oauth2.eu.appcelerator.io']);
+$client = new Client(fn(string $service) => $tokens->get("api://$service-service"), $serviceUrls);
+```
+
+New in 2.0:
+
+- `Config`: the client requests, caches and renews a token per service itself, so you no longer request tokens and build a client per token.
+- `request()` on every service, and on the client for an absolute URL. Configured services without predefined endpoints (`$client->billing`, `$client->service('billing')`).
+- `onBehalfOf()` and `forTenant()`: tokens of a user and of a tenant, through token exchange.
+- A rejected token is replaced once, also for predefined endpoints.
+- Role and scope assignments are a sub-resource: `/role/{roleIdOrValue}/assignment/` and `/scope/{scopeIdOrValue}/assignment/`. `roles->assignments()` and `scopes->assignments()` list them, `assign`, `revoke`, `approve` and `reject` keep their arguments. This needs an OAuth2 service with these endpoints.
+- Service URLs keep their case (1.x lowercased them).
 
 ## License
 

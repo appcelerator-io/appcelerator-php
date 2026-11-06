@@ -93,4 +93,38 @@ class Response
 
         return is_array($data) ? $data : [];
     }
+
+    /**
+     * status
+     */
+    public function status() : int
+    {
+        return $this->statusCode;
+    }
+
+    /**
+     * body
+     *  The raw body
+     */
+    public function body() : string
+    {
+        return $this->content;
+    }
+
+    /**
+     * json
+     *  The decoded JSON body, an empty array when the body is empty or not JSON (see getParameters)
+     */
+    public function json() : array
+    {
+        return $this->getParameters();
+    }
+
+    /**
+     * header
+     */
+    public function header(string $name) : null|string
+    {
+        return $this->getHeader($name);
+    }
 }

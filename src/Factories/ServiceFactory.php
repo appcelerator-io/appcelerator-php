@@ -5,15 +5,18 @@ namespace AppCelerator\Factories;
 
 use AppCelerator\Client;
 use AppCelerator\Exceptions\AppCeleratorException;
+use AppCelerator\Services\Service;
 
 /**
  * ServiceFactory
+ *  $client->{name}: the service with predefined endpoints (Services/{Name}Service.php), or for another configured service
+ *  (e.g. backup) a Service with request() only
  */
 class ServiceFactory
 {
     private array $services;
 
-    public function __construct(private Client $client, private array $opts = [])
+    public function __construct(protected Client $client, private array $opts = [])
     {
         $this->services = [];
     }
@@ -23,38 +26,39 @@ class ServiceFactory
         $this->services[$name] = $class;
     }
 
-    private function initService(string $name)
+    /**
+     * initService
+     *  False when there is no class for the service
+     */
+    private function initService(string $name) : bool
     {
         $serviceName = $name . "Service";
 
-        $filePath = dirname(__FILE__) . "/../Services/$serviceName.php";
+        $directory = dirname(__FILE__) . "/../Services";
 
-        if(!is_file($filePath))
-            throw new AppCeleratorException("Path '$filePath' could not be found");
+        $results = array_values(preg_grep("/^" . preg_quote($serviceName, "/") . "\.php$/i", scandir($directory)));
 
-        include_once $filePath;
+        if(count($results) == 0 || strtolower($serviceName) === "service")
+            return false;
 
-        if(!is_dir(dirname($filePath)))
-            throw new AppCeleratorException("Directory '".dirname($filePath)."' could not be found");
+        include_once "$directory/$results[0]";
 
-        $results = array_values(preg_grep("/$serviceName\.php$/i", scandir(dirname($filePath))));
+        $this->addService($name, '\\AppCelerator\\Services\\' . substr($results[0], 0, strpos($results[0], ".")));
 
-        if(count($results) == 0)
-            throw new AppCeleratorException("Service '$name' could not be found");
-
-        $fileName = reset($results);
-
-        $className = substr($fileName, 0, strpos($fileName, "."));
-
-        $this->addService($name, '\\AppCelerator\\Services\\'.$className);
+        return true;
     }
 
     public function __get($name)
     {
         $name = ucfirst(strtolower($name));
 
-        if(!array_key_exists($name, $this->services))
-            $this->initService($name);
+        if(!array_key_exists($name, $this->services) && !$this->initService($name))
+        {
+            if(!$this->client->hasService($name))
+                throw new AppCeleratorException("Service '$name' could not be found, configure its URL first");
+
+            return new Service($this->client, $name, $this->opts);
+        }
 
         return new $this->services[$name]($this->client, $this->opts);
     }

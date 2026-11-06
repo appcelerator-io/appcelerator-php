@@ -14,6 +14,15 @@ abstract class Curl
     { }
 
     /**
+     * setToken
+     *  E.g. a new token after the service rejected the old one
+     */
+    protected function setToken(null|string $token) : void
+    {
+        $this->token = $token;
+    }
+
+    /**
      * call
      */
     function call(string $method, string $url, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false)

@@ -7,6 +7,7 @@ use AppCelerator\Exceptions\AppCeleratorHttpException;
 use AppCelerator\Interfaces\ControllerInterface;
 use AppCelerator\Interfaces\ServiceInterface;
 use AppCelerator\Utils\Curl;
+use AppCelerator\Utils\Headers;
 use AppCelerator\Utils\Response;
 
 /**
@@ -62,9 +63,20 @@ class Controller extends Curl implements ControllerInterface
 
     public function curl(string $method, string $path, array $data = [], array $headers = [], bool $verbose = false, bool $debug = false) : array
     {
-        $headers = array_merge(@$this->opts["headers"] ?? [], $headers);
+        $client = $this->service->getClient();
+
+        $headers = Headers::merge(@$this->opts["headers"] ?? [], $client->getHeaders(), $headers);
 
         $this->response = self::call($method, $this->getEndpointUrl($path), $data, $headers, $verbose, $debug);
+
+        // A rejected token the client requested itself (e.g. signed with a key that no longer exists): a new token, once
+        if($this->response->getStatusCode() === 401 && $client->canRenewKey() && !Headers::has($headers, "Authorization"))
+        {
+            $client->forgetKey($this->service->getName());
+            $this->setToken($client->getKey($this->service->getName()));
+
+            $this->response = self::call($method, $this->getEndpointUrl($path), $data, $headers, $verbose, $debug);
+        }
 
         $this->handleResponseErrors($this->response);
 
