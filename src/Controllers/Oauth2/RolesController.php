@@ -27,25 +27,38 @@ class RolesController extends CRUDController
     }
 
     /**
+     * Who holds the role: its assignments, also pending (permissionGranted null) and rejected (false) ones
+     *
+     * @param string $role Role ID or value
+     * @param array $params subjectId, tenant (the tenant the assignment counts for, the own identifier for those of the owner itself), permissionGranted <true,false,null,all>, fields, orderBy, orderByOrder <asc,desc>, limit, offset, page
+     * @param array $options
+     * @return array [["subjectId", "roleId", "permissionGranted", "targetOwnerId" (the tenant, "" for the owner itself), "created"], ...]
+     */
+    public function assignments($role, array $params = [], array $options = [])
+    {
+        return self::curl("GET", "$role/assignment/", $params, @$options["headers"] ?? [])["data"];
+    }
+
+    /**
      * @param string $subjectId ID of subject
-     * @param string $role Role ID or name
+     * @param string $role Role ID or value
      * @param array $options
      * @param null|string $tenant The tenant (identifier) the subject holds the role for, the subject acts in that tenant through a token exchange with tenant. Only the owner of the role assigns it for a tenant, to its own users. Null for the owner itself
      */
     public function assign($subjectId, $role, array $options = [], null|string $tenant = null)
     {
-        return self::curl("POST", "assign", self::withTenant(["subjectId" => $subjectId, "role" => $role], $tenant), @$options["headers"] ?? []);
+        return self::curl("POST", "$role/assignment/", self::withTenant(["subjectId" => $subjectId], $tenant), @$options["headers"] ?? []);
     }
 
     /**
      * @param string $subjectId ID of subject
-     * @param string $role Role ID or name
+     * @param string $role Role ID or value
      * @param array $options
      * @param null|string $tenant The tenant (identifier) the subject holds the role for, the subject acts in that tenant through a token exchange with tenant. Only the owner of the role assigns it for a tenant, to its own users. Null for the owner itself
      */
     public function revoke($subjectId, $role, array $options = [], null|string $tenant = null)
     {
-        return self::curl("POST", "revoke", self::withTenant(["subjectId" => $subjectId, "role" => $role], $tenant), @$options["headers"] ?? []);
+        return self::curl("DELETE", "$role/assignment/$subjectId/", self::withTenant([], $tenant), @$options["headers"] ?? []);
     }
 
     /**
@@ -57,7 +70,7 @@ class RolesController extends CRUDController
      */
     public function approve($subjectId, $role, array $options = [], null|string $tenant = null)
     {
-        return self::curl("POST", "approve", self::withTenant(self::assignmentParams($subjectId, $role), $tenant), @$options["headers"] ?? []);
+        return self::curl("POST", "$role/assignment/$subjectId/approve", self::withTenant([], $tenant), @$options["headers"] ?? []);
     }
 
     /**
@@ -69,15 +82,7 @@ class RolesController extends CRUDController
      */
     public function reject($subjectId, $role, array $options = [], null|string $tenant = null)
     {
-        return self::curl("POST", "reject", self::withTenant(self::assignmentParams($subjectId, $role), $tenant), @$options["headers"] ?? []);
-    }
-
-    /**
-     * approve and reject take the role as roleId or value
-     */
-    private static function assignmentParams($subjectId, $role) : array
-    {
-        return ["subjectId" => $subjectId, (preg_match("/^role_[0-9a-zA-Z]{12,24}$/", (string) $role) ? "roleId" : "value") => $role];
+        return self::curl("POST", "$role/assignment/$subjectId/reject", self::withTenant([], $tenant), @$options["headers"] ?? []);
     }
 
     /**

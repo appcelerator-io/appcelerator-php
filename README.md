@@ -207,8 +207,8 @@ All OAuth2 resources are available on `$client->oauth2`.
 | `users` | `get`, `list`, `create`, `update`, `delete`, `self`, `authenticate`, `changeEmail`, `confirmEmail`, `changePassword`, `requestPasswordReset`, `resetPassword`, `logs` |
 | `clients` | `get`, `list`, `create`, `update`, `delete`, `self`, `logs` |
 | `secrets` | `get`, `list`, `create`, `update`, `delete` |
-| `scopes` | `get`, `list`, `create`, `update`, `delete`, `subject`, `assign`, `revoke`, `approve`, `reject` |
-| `roles` | `get`, `list`, `create`, `update`, `delete`, `assign`, `revoke`, `approve`, `reject` |
+| `scopes` | `get`, `list`, `create`, `update`, `delete`, `subject`, `assignments`, `assign`, `revoke`, `approve`, `reject` |
+| `roles` | `get`, `list`, `create`, `update`, `delete`, `assignments`, `assign`, `revoke`, `approve`, `reject` |
 | `identityProviders` | `get`, `list`, `create`, `update`, `delete` |
 | `userIdentities` | `get`, `list`, `create`, `delete` |
 | `verification` | `start`, `confirm` |
@@ -256,19 +256,29 @@ $client->oauth2->scopes->create('invoice:read', ['description' => 'Read invoices
 $client->oauth2->roles->create('accountant', ['description' => 'Finance team']);
 
 $client->oauth2->scopes->assign($roleId, 'invoice:read');   // scope to role
+$client->oauth2->scopes->assign($clientId, 'invoice:read', kind: 'application'); // only for the client's own tokens
 $client->oauth2->roles->assign($userId, 'accountant');      // role to user
 
 $client->oauth2->roles->revoke($userId, 'accountant');
 
 // Every scope of a subject, directly and through roles
 $scopes = $client->oauth2->scopes->subject($userId);
+
+// Who holds a role or received a scope, with filters
+$holders = $client->oauth2->roles->assignments('accountant', ['subjectId' => $userId]);
+$receivers = $client->oauth2->scopes->assignments('invoice:read', ['kind' => 'delegated']);
 ```
+
+A scope or role is addressed by its ID or its value (values never contain an underscore, IDs always do). The assignments are a sub-resource: `/role/{roleIdOrValue}/assignment/` and `/scope/{scopeIdOrValue}/assignment/`, see the OAuth2 service API docs.
 
 A role can be assigned **for a tenant**: the user then acts in that tenant through a token exchange with `tenant`, with the scopes of that role. Only the owner of the role assigns it for a tenant, to its own users. `revoke`, `approve` and `reject` take the same `tenant`:
 
 ```php
 $client->oauth2->roles->assign($userId, 'oauth2-federated-access-scopes', tenant: 'myapp.dev');
 $client->oauth2->roles->revoke($userId, 'oauth2-federated-access-scopes', tenant: 'myapp.dev');
+
+// Who holds the role for the tenant
+$holders = $client->oauth2->roles->assignments('oauth2-federated-access-scopes', ['tenant' => 'myapp.dev']);
 ```
 
 An assignment can be **pending**, for example when it is requested from another tenant. A pending assignment gives no access until the owner of the scope or role approves it:
@@ -279,6 +289,9 @@ $client->oauth2->roles->reject($userId, 'accountant');
 
 $client->oauth2->scopes->approve($userId, 'invoice:read');
 $client->oauth2->scopes->reject($userId, 'invoice:read');
+
+// The pending assignments
+$pending = $client->oauth2->roles->assignments('accountant', ['permissionGranted' => 'null']);
 ```
 
 ### Identity providers
