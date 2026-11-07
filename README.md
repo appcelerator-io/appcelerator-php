@@ -342,7 +342,7 @@ All OAuth2 resources are available on `$client->oauth2`.
 | Property | Methods |
 |---|---|
 | `token` | `clientCredentials`, `authorizationCode`, `refreshToken`, `password`, `mfa`, `jwtBearer`, `request` |
-| `users` | `get`, `list`, `create`, `update`, `delete`, `self`, `authenticate`, `changeEmail`, `confirmEmail`, `changePassword`, `requestPasswordReset`, `resetPassword`, `logs` |
+| `users` | `get`, `list`, `create`, `update`, `delete`, `self`, `changeEmail`, `confirmEmail`, `changePassword`, `requestPasswordReset`, `resetPassword`, `logs` |
 | `clients` | `get`, `list`, `create`, `update`, `delete`, `self`, `logs` |
 | `secrets` | `get`, `list`, `create`, `update`, `delete` |
 | `scopes` | `get`, `list`, `create`, `update`, `delete`, `subject`, `assignments`, `assign`, `revoke`, `approve`, `reject` |
@@ -547,6 +547,10 @@ New in 2.1:
 - `urls` per service: more base URLs that may receive its token.
 - `<name>.*.appcelerator.io` (a region without tenant) is one of the default hosts of a service.
 - `Response::getParameter()`.
+
+New in 2.2:
+
+- `users->authenticate()` is removed, like `POST /user/authenticate` of the OAuth2 service: a user signs in at the login page of the OAuth2 service (authorization code with PKCE), see [Authentication](#authentication). A trusted first-party app with the password grant enabled uses `token->password()`.
 
 ## License
 

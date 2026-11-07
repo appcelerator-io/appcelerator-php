@@ -38,23 +38,6 @@ class UsersController extends CRUDController
     }
 
     /**
-     * @param string $email User email
-     * @param string $password User password
-     * @param array $params scope (space delimited, all granted scopes when omitted)
-     * @param array $options
-     * @return array [tokenData] or [flow, mfa_token] when MFA is enabled
-     */
-    public function authenticate($email, $password, array $params = [], array $options = [])
-    {
-        $params = array_merge([
-            "email" => $email,
-            "password" => $password,
-        ], $params);
-
-        return self::curl("POST", "authenticate", $params, @$options["headers"] ?? []);
-    }
-
-    /**
      * @param string $userId User ID
      * @param string $email User email
      * @param array $options
